@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns:dm0="http://schemas.microsoft.com/VisualStudio/2008/DslTools/Core" dslVersion="1.0.0.0" Id="81860167-07b5-455f-8664-c5247ad8ce84" solutionId="81860167-07b5-455f-8664-c5247ad8ce84" resetWebServer="false" sharePointProductVersion="15.0" name="MaxMelcher.AzureSearch" xmlns="http://schemas.microsoft.com/VisualStudio/2008/SharePointTools/PackageModel">
+  <features>
+    <featureReference itemId="4951e637-d546-480f-8198-aa99b6bf900a" />
+  </features>
+</package>
