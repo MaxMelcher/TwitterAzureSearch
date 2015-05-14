@@ -1,25 +1,31 @@
 ﻿<Window x:Class="MaxMelcher.AzureSearch.DataHub.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:dataHub="clr-namespace:MaxMelcher.AzureSearch.DataHub"
+        mc:Ignorable="d"
         Title="Max Melcher - Azure Twitter Search" Height="609.149" Width="1000.106">
-    <Grid>
+    <Grid Name="Grid">
         <TextBox HorizontalAlignment="Left" Height="23" Margin="144,85,0,0" TextWrapping="Wrap" Text="http://intranet.demo.com:4242" VerticalAlignment="Top" Width="461" Name="txtHubUrl"/>
-        <TextBox HorizontalAlignment="Left" Height="23" Margin="144,122,0,0" TextWrapping="Wrap" Text="#ShareCamp" VerticalAlignment="Top" Width="461" Name="txtTwitterHash"/>
+        <TextBox HorizontalAlignment="Left" Height="23" Margin="144,122,0,0" TextWrapping="Wrap" Text="{Binding TwitterHashtag}" VerticalAlignment="Top" Width="461" Name="txtTwitterHash"/>
         <TextBox HorizontalAlignment="Left" Height="23" Margin="144,162,0,0" TextWrapping="Wrap" Text="https://intranet.demo.com/sites/azuresearch/lists/tweets" VerticalAlignment="Top" Width="461" Name="txtSharePointListUrl"/>
         <Label Content="SignalR Hub:" HorizontalAlignment="Left" Margin="41,85,0,0" VerticalAlignment="Top"/>
         <Label Content="Twitter Hashtag:" HorizontalAlignment="Left" Margin="41,122,0,0" VerticalAlignment="Top"/>
         <Label Content="Target List" HorizontalAlignment="Left" Margin="41,158,0,0" VerticalAlignment="Top"/>
-        <Button Content="Start" HorizontalAlignment="Left" Margin="629,84,0,0" VerticalAlignment="Top" Width="75"/>
-        <Button Content="Start" HorizontalAlignment="Left" Margin="629,122,0,0" VerticalAlignment="Top" Width="75"/>
-        <Button Content="Start" HorizontalAlignment="Left" Margin="629,165,0,0" VerticalAlignment="Top" Width="75"/>
-        <Button Content="Stop" HorizontalAlignment="Left" Margin="723,84,0,0" VerticalAlignment="Top" Width="75"/>
-        <Button Content="Stop" HorizontalAlignment="Left" Margin="723,122,0,0" VerticalAlignment="Top" Width="75"/>
-        <Button Content="Stop" HorizontalAlignment="Left" Margin="723,165,0,0" VerticalAlignment="Top" Width="75"/>
-        <TextBox HorizontalAlignment="Left" Height="23" Margin="842,122,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="120" Name="txtTPS"/>
-        <CheckBox Content="Sentiment" HorizontalAlignment="Left" Margin="842,165,0,0" VerticalAlignment="Top"/>
+        <Button Name="btnStartHub" Content="Start" HorizontalAlignment="Left" Margin="629,84,0,0" VerticalAlignment="Top" Width="75" Click="Button_StartHub"/>
+        <Button Name="btnStartTwitter" Content="Start" HorizontalAlignment="Left" Margin="629,122,0,0" VerticalAlignment="Top" Width="75" Click="btnStartTwitter_Click"/>
+        <Button Name="btnStartSharePoint" Content="Start" HorizontalAlignment="Left" Margin="629,165,0,0" VerticalAlignment="Top" Width="75" Click="btnStartSharePoint_Click"/>
+        <Button Name="btnStopHub" IsEnabled="false"  Content="Stop" HorizontalAlignment="Left" Margin="723,84,0,0" VerticalAlignment="Top" Width="75" Click="Button_StopHub"/>
+        <Button Name="btnStopTwitter" IsEnabled="False" Content="Stop" HorizontalAlignment="Left" Margin="723,122,0,0" VerticalAlignment="Top" Width="75" Click="btnStopTwitter_Click"/>
+        <Button Name="btnStopSharePoint" IsEnabled="False" Content="Stop" HorizontalAlignment="Left" Margin="723,165,0,0" VerticalAlignment="Top" Width="75" Click="btnStopSharePoint_Click"/>
+        <TextBox HorizontalAlignment="Left" Height="23" Margin="842,122,0,0" TextWrapping="Wrap" Text="{Binding TwitterCount, Mode=TwoWay}" VerticalAlignment="Top" Width="120" Name="txtTPS"/>
+        <CheckBox Content="Sentiment" HorizontalAlignment="Left" Margin="842,204,0,0" VerticalAlignment="Top"/>
         <Button Content="Reindex" HorizontalAlignment="Left" Margin="271,270,0,0" VerticalAlignment="Top" Width="75"/>
         <Label Content="Azure Search:" HorizontalAlignment="Left" Margin="41,201,0,0" VerticalAlignment="Top"/>
         <TextBox HorizontalAlignment="Left" Height="23" Margin="144,204,0,0" TextWrapping="Wrap" Text="https://maxmelcher.search.windows.net" VerticalAlignment="Top" Width="461" x:Name="txtAzureSearch"/>
         <Button Content="Create Schema" HorizontalAlignment="Left" Margin="144,270,0,0" VerticalAlignment="Top" Width="107"/>
+        <TextBox HorizontalAlignment="Left" Height="23" Margin="842,85,0,0" TextWrapping="Wrap" Text="{Binding SignalRCount, Mode=TwoWay}" VerticalAlignment="Top" Width="120" x:Name="txtSignalR"/>
+        <TextBox HorizontalAlignment="Left" Height="23" Margin="842,165,0,0" TextWrapping="Wrap" Text="{Binding SharePointCount, Mode=TwoWay}" VerticalAlignment="Top" Width="120" x:Name="txtSP"/>
     </Grid>
 </Window>
