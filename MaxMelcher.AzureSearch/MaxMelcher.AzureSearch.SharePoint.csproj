@@ -41,6 +41,14 @@
     <AssemblyOriginatorKeyFile>key.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.AspNet.SignalR.Client, Version=2.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.SignalR.Client.2.2.0\lib\net45\Microsoft.AspNet.SignalR.Client.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.6.0.4\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
@@ -56,6 +64,7 @@
     <Compile Include="TweetReceiver\TweetReceiver.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
     <None Include="Features\TweetReceiver\TweetReceiver.feature">
       <FeatureId>{4951e637-d546-480f-8198-aa99b6bf900a}</FeatureId>
     </None>
@@ -71,7 +80,12 @@
       <SharePointProjectItemId>{739eeead-df2c-4115-af21-b1b729257cc6}</SharePointProjectItemId>
     </None>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\MaxMelcher.AzureSearch.DataHub\MaxMelcher.AzureSearch.DataHub.csproj">
+      <Project>{2D3CB1DE-248C-432A-A319-4CFB7D275262}</Project>
+      <Name>MaxMelcher.AzureSearch.DataHub</Name>
+    </ProjectReference>
+  </ItemGroup>
   <ItemGroup>
     <Content Include="Features\TweetReceiver\TweetReceiver.Template.xml">
       <DependentUpon>TweetReceiver.feature</DependentUpon>

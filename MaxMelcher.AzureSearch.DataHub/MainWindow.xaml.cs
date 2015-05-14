@@ -9,16 +9,17 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using LinqToTwitter;
-using Microsoft.AspNet.SignalR;
+using Microsoft.AspNet.SignalR.Client;
 using Microsoft.Owin.Hosting;
-using Owin;
+using Microsoft.SharePoint.Client;
+using List = Microsoft.SharePoint.Client.List;
+using ListItem = Microsoft.SharePoint.Client.ListItem;
 
 namespace MaxMelcher.AzureSearch.DataHub
 {
@@ -67,11 +68,23 @@ namespace MaxMelcher.AzureSearch.DataHub
             Grid.DataContext = this;
         }
 
-        private void Button_StartHub(object sender, RoutedEventArgs e)
+        private async void Button_StartHub(object sender, RoutedEventArgs e)
         {
             webapp = WebApp.Start<Startup>("http://*:4242/");
             btnStartHub.IsEnabled = false;
             btnStopHub.IsEnabled = true;
+
+            var connection = new HubConnection("http://localhost:4242");
+            var hubProxy = connection.CreateHubProxy("TweetHub");
+
+            hubProxy.On<Tweet>("NewSPTweet", (tweet) =>
+            {
+                SignalRCount++;
+            });
+            
+            await connection.Start();
+            
+
         }
 
         private void Button_StopHub(object sender, RoutedEventArgs e)
@@ -113,14 +126,28 @@ namespace MaxMelcher.AzureSearch.DataHub
 
                      if (_stopTwitter) {  strm.CloseStream();}
 
-                     UploadSharePoint(strm.Content);
+                     if (strm.EntityType == StreamEntityType.Status)
+                     {
+                         UploadSharePoint((Status)strm.Entity);
+                     }
                  });
         }
 
-        private void UploadSharePoint(string content)
+        private void UploadSharePoint(Status content)
         {
             if (_stopSharePoint) return;
 
+            string siteUrl = "https://intranet.demo.com/sites/azuresearch";
+
+            ClientContext clientContext = new ClientContext(siteUrl);
+            List oList = clientContext.Web.Lists.GetByTitle("Tweets");
+
+            ListItemCreationInformation itemCreateInfo = new ListItemCreationInformation();
+            ListItem oListItem = oList.AddItem(itemCreateInfo);
+            oListItem["Title"] = content.Text;
+
+            oListItem.Update();
+            clientContext.ExecuteQuery(); 
             SharePointCount++;
         }
 
@@ -154,21 +181,6 @@ namespace MaxMelcher.AzureSearch.DataHub
             _stopSharePoint = true;
             btnStartSharePoint.IsEnabled = true;
             btnStopSharePoint.IsEnabled = false;
-        }
-    }
-
-    class Startup
-    {
-        public void Configuration(IAppBuilder app)
-        {
-            app.MapSignalR();
-        }
-    }
-    public class MyHub : Hub
-    {
-        public void Send(string name, string message)
-        {
-            Clients.All.addMessage(name, message);
         }
     }
 }
