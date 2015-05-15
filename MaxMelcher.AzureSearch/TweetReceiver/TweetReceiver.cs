@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Security.Permissions;
 using MaxMelcher.AzureSearch.DataHub;
 using Microsoft.AspNet.SignalR.Client;
@@ -21,18 +22,30 @@ namespace MaxMelcher.AzureSearch.TweetReceiver
         {
             base.ItemAdding(properties);
 
-            var listitem = properties.AfterProperties;
+            var afterProperties = properties.AfterProperties;
             Tweet tweet = new Tweet();
-            tweet.Mention = (string) listitem["Mention"];
-            tweet.Score = double.Parse((string) listitem["Score"]);
-            tweet.Sentiment = (string) listitem["Sentiment"];
-            tweet.Text = (string)listitem["Title"];
-            tweet.Url = (string) listitem["Url"];
+            tweet.Mention = (string) afterProperties["Mention"];
+            
+            double score;
+            double.TryParse((string) afterProperties["Score"], out score);
+            tweet.Score = score;
 
-            var connection = new HubConnection("http://localhost:4242"); 
-            var hubProxy = connection.CreateHubProxy("TweetHub");
-            await connection.Start();
-            await hubProxy.Invoke("NewSPTweet", tweet);
+            tweet.Sentiment = (string) afterProperties["Sentiment"];
+            tweet.Text = (string)afterProperties["Title"];
+            tweet.Url = (string) afterProperties["Url"];
+
+
+            try
+            {
+                var connection = new HubConnection("http://localhost:4242");
+                var hubProxy = connection.CreateHubProxy("TweetHub");
+                await connection.Start();
+                await hubProxy.Invoke("NewSPTweet", tweet);
+            }
+            catch (Exception)
+            {
+                //nothing to do here
+            }
         }
     }
 }

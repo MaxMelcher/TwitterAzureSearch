@@ -69,6 +69,7 @@
     <Reference Include="Microsoft.Azure.Search">
       <HintPath>..\packages\Microsoft.Azure.Search.0.10.0-preview\lib\net40\Microsoft.Azure.Search.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.CobaltCore, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL" />
     <Reference Include="Microsoft.Owin">
       <HintPath>..\packages\Microsoft.Owin.2.1.0\lib\net45\Microsoft.Owin.dll</HintPath>
     </Reference>
@@ -153,6 +154,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Base64.cs" />
     <Compile Include="Startup.cs" />
     <Compile Include="Tweet.cs" />
     <Compile Include="TweetHub.cs" />
@@ -196,7 +198,9 @@
     <AppDesigner Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\Microsoft.Bcl.Build.1.0.14\tools\Microsoft.Bcl.Build.targets" Condition="Exists('..\packages\Microsoft.Bcl.Build.1.0.14\tools\Microsoft.Bcl.Build.targets')" />
