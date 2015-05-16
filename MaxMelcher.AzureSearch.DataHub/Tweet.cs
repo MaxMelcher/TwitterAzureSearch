@@ -16,5 +16,10 @@ namespace MaxMelcher.AzureSearch.DataHub
         public string Sentiment { get; set; }
         public double Score { get; set; }
         private DateTime Created { get; set; }
+
+        public override string ToString()
+        {
+            return Text;
+        }
     }
 }
