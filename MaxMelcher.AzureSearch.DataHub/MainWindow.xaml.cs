@@ -9,30 +9,26 @@ using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using LinqToTwitter;
 using Microsoft.AspNet.SignalR.Client;
+using Microsoft.Azure.Search;
+using Microsoft.Azure.Search.Models;
 using Microsoft.Owin.Hosting;
 using Microsoft.SharePoint.Client;
+using Field = Microsoft.SharePoint.Client.Field;
+using ASField = Microsoft.Azure.Search.Models.Field;
 using List = Microsoft.SharePoint.Client.List;
-using ListItem = Microsoft.SharePoint.Client.ListItem;
 
 namespace MaxMelcher.AzureSearch.DataHub
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window, INotifyPropertyChanged
+    public partial class MainWindow : INotifyPropertyChanged
     {
-        private IDisposable webapp;
+        private IDisposable _webapp;
         private string _twitterHashtag = "#gntm";
-        private readonly Regex regexSentiment = new Regex(".*Score\":(\\d\\.(\\d)*)*}$", RegexOptions.Multiline);
+        private readonly Regex _regexSentiment = new Regex(".*Score\":(\\d\\.(\\d)*)*}$", RegexOptions.Multiline);
 
 
         private bool _stopTwitter = true;
@@ -41,11 +37,30 @@ namespace MaxMelcher.AzureSearch.DataHub
         private int _twitterCount;
         private bool _stopSharePoint = true;
         private bool _sentimentEnabled;
+        private SearchServiceClient _searchServiceClient;
+
+        public string SearchText { get; set; }
 
         public string TwitterHashtag
         {
             get { return _twitterHashtag; }
             set { _twitterHashtag = value; NotifyPropertyChanged("TwitterHashtag"); }
+        }
+
+        public SearchServiceClient SearchServiceClient
+        {
+            get
+            {
+                if (_searchServiceClient == null)
+                {
+                    string searchServiceName = ConfigurationManager.AppSettings["SearchServiceName"];
+                    string apiKey = ConfigurationManager.AppSettings["SearchServiceApiKey"];
+
+                    _searchServiceClient = new SearchServiceClient(searchServiceName, new SearchCredentials(apiKey));
+                }
+                return _searchServiceClient;
+            }
+            set { _searchServiceClient = value; }
         }
 
         public int TwitterCount
@@ -83,7 +98,7 @@ namespace MaxMelcher.AzureSearch.DataHub
 
         private async void Button_StartHub(object sender, RoutedEventArgs e)
         {
-            webapp = WebApp.Start<Startup>("http://*:4242/");
+            _webapp = WebApp.Start<Startup>("http://*:4242/");
             btnStartHub.IsEnabled = false;
             btnStopHub.IsEnabled = true;
 
@@ -102,7 +117,7 @@ namespace MaxMelcher.AzureSearch.DataHub
 
         private void Button_StopHub(object sender, RoutedEventArgs e)
         {
-            webapp.Dispose();
+            _webapp.Dispose();
             btnStartHub.IsEnabled = true;
             btnStopHub.IsEnabled = false;
         }
@@ -160,18 +175,18 @@ namespace MaxMelcher.AzureSearch.DataHub
             oListItem["Title"] = content.Text;
             oListItem["Url"] = string.Format("https://twitter.com/{0}/status/{1}", content.User.ScreenNameResponse, content.StatusID);
             oListItem["Mention"] = string.Join("; ", content.Entities.UserMentionEntities.Select(x => string.Concat("@", x.ScreenName)));
+            oListItem["StatusId"] = content.StatusID;
             var score = await GetSentiment(content);
-            if (score > -1)
-            {
-                oListItem["Score"] = score;
-            }
+
+            oListItem["Score"] = score;
+
 
             string sentiment = "";
-            if (score == -1)
+            if ((int)score == -1)
             {
                 //do nothing
             }
-            if (score < 0.1)
+            else if (score < 0.1)
             {
                 sentiment = "very bad";
             }
@@ -212,7 +227,7 @@ namespace MaxMelcher.AzureSearch.DataHub
 
             //{"odata.metadata":"https://api.datamarket.azure.com/data.ashx/amla/text-analytics/v1/$metadata#TextAnalytics.FrontEndService.Models.SentimentResult","Score":0.8359476}
             sentiment = sentiment.Replace("\r\n", "");
-            var value = regexSentiment.Match(sentiment).Groups[1].Value;
+            var value = _regexSentiment.Match(sentiment).Groups[1].Value;
 
             return double.Parse(value);
         }
@@ -247,6 +262,116 @@ namespace MaxMelcher.AzureSearch.DataHub
             _stopSharePoint = true;
             btnStartSharePoint.IsEnabled = true;
             btnStopSharePoint.IsEnabled = false;
+        }
+
+        private void btnCreateSchema_Click(object sender, RoutedEventArgs e)
+        {
+            CreateIndex();
+        }
+
+        private void CreateIndex()
+        {
+            // Create the Azure Search index based on the included schema
+            try
+            {
+                var definition = new Index
+                {
+                    Name = "twittersearch",
+                    Fields = new[]
+                    {
+                        new ASField("Text", DataType.String) {IsKey = false, IsSearchable = true, IsFilterable = false, IsSortable = false, IsFacetable = false, IsRetrievable = true},
+                        new ASField("Mention", DataType.String) {IsKey = false, IsSearchable = true, IsFilterable = true, IsSortable = false, IsFacetable = true, IsRetrievable = true},
+                        new ASField("Created", DataType.DateTimeOffset) {IsKey = false, IsSearchable = false, IsFilterable = true, IsSortable = true, IsFacetable = false, IsRetrievable = true},
+                        new ASField("Url", DataType.String) {IsKey = false, IsSearchable = true, IsFilterable = false, IsSortable = false, IsFacetable = true, IsRetrievable = true},
+                        new ASField("StatusId", DataType.String) {IsKey = true, IsSearchable = true, IsFilterable = false, IsSortable = true, IsFacetable = true, IsRetrievable = true},
+                        new ASField("Sentiment", DataType.String) {IsKey = false, IsSearchable = true, IsFilterable = false, IsSortable = true, IsFacetable = true, IsRetrievable = true},
+                        new ASField("Score", DataType.Double),
+                    }
+                };
+
+                SearchServiceClient.Indexes.Create(definition);
+            }
+            catch (Exception ex)
+            {
+            }
+        }
+
+        private void btnDeleteIndex_Click(object sender, RoutedEventArgs e)
+        {
+            DeleteIndex();
+        }
+
+        private void DeleteIndex()
+        {
+            SearchServiceClient.Indexes.Delete("twittersearch");
+        }
+
+        private void btnReindex_Click(object sender, RoutedEventArgs e)
+        {
+            DeleteIndex();
+            CreateIndex();
+            string siteUrl = "https://intranet.demo.com/sites/azuresearch";
+            ClientContext clientContext = new ClientContext(siteUrl);
+            List oList = clientContext.Web.Lists.GetByTitle("Tweets");
+
+            var query = CamlQuery.CreateAllItemsQuery(1000);
+            ListItemCollection items = oList.GetItems(query);
+
+            clientContext.Load(items);
+            clientContext.ExecuteQuery();
+
+            List<Tweet> tweets = new List<Tweet>();
+            foreach (var item in items)
+            {
+                var tweet = new Tweet
+                {
+                    Mention = (string)item["Mention"],
+                    Text = (string)item["Title"],
+                    Sentiment = (string)item["Sentiment"],
+                    Score = (double)item["Score"],
+                    StatusId = (string)item["StatusId"],
+                    Url = ((FieldUrlValue)item["Url"]).Url
+                };
+                tweets.Add(tweet);
+            }
+
+            SearchIndexClient indexClient = SearchServiceClient.Indexes.GetClient("twittersearch");
+
+            try
+            {
+                indexClient.Documents.Index(IndexBatch.Create(tweets.Select(doc => IndexAction.Create(doc))));
+            }
+            catch (IndexBatchException ex)
+            {
+            }
+
+        }
+
+        private async void SearchDocuments()
+        {
+            try
+            {
+
+            // Execute search based on search text and optional filter
+            var sp = new SearchParameters();
+
+            SearchIndexClient indexClient = SearchServiceClient.Indexes.GetClient("twittersearch");
+            DocumentSearchResponse<Tweet> response = await indexClient.Documents.SearchAsync<Tweet>(SearchText, sp);
+            foreach (SearchResult<Tweet> result in response)
+            {
+                Console.WriteLine(result.Document);
+            }
+
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+
+        private void btnSearch_Click(object sender, RoutedEventArgs e)
+        {
+            SearchDocuments();
         }
     }
 }

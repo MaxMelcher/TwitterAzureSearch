@@ -33,7 +33,7 @@ namespace MaxMelcher.AzureSearch.TweetReceiver
             tweet.Sentiment = (string) afterProperties["Sentiment"];
             tweet.Text = (string)afterProperties["Title"];
             tweet.Url = (string) afterProperties["Url"];
-
+            tweet.StatusId = (string) afterProperties["StatusId"];
 
             try
             {

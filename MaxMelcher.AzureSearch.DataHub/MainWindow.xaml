@@ -5,7 +5,7 @@
     <Grid Name="Grid">
         <TextBox HorizontalAlignment="Left" Height="23" Margin="144,85,0,0" TextWrapping="Wrap" Text="http://intranet.demo.com:4242" VerticalAlignment="Top" Width="461" Name="txtHubUrl"/>
         <TextBox HorizontalAlignment="Left" Height="23" Margin="144,122,0,0" TextWrapping="Wrap" Text="{Binding TwitterHashtag}" VerticalAlignment="Top" Width="461" Name="txtTwitterHash"/>
-        <TextBox HorizontalAlignment="Left" Height="23" Margin="144,162,0,0" TextWrapping="Wrap" Text="https://intranet.demo.com/sites/azuresearch/lists/tweets" VerticalAlignment="Top" Width="461" Name="txtSharePointListUrl"/>
+        <TextBox HorizontalAlignment="Left" Height="23" Margin="144,162,0,0" TextWrapping="Wrap" Text="https://intranet.demo.com/sites/azuresearch/lists/tweets" VerticalAlignment="Top" Width="407" Name="txtSharePointListUrl"/>
         <Label Content="SignalR Hub:" HorizontalAlignment="Left" Margin="41,85,0,0" VerticalAlignment="Top"/>
         <Label Content="Twitter Hashtag:" HorizontalAlignment="Left" Margin="41,122,0,0" VerticalAlignment="Top"/>
         <Label Content="Target List" HorizontalAlignment="Left" Margin="41,158,0,0" VerticalAlignment="Top"/>
@@ -17,11 +17,15 @@
         <Button Name="btnStopSharePoint" IsEnabled="False" Content="Stop" HorizontalAlignment="Left" Margin="723,165,0,0" VerticalAlignment="Top" Width="75" Click="btnStopSharePoint_Click"/>
         <TextBox HorizontalAlignment="Left" Height="23" Margin="842,122,0,0" TextWrapping="Wrap" Text="{Binding TwitterCount, Mode=TwoWay}" VerticalAlignment="Top" Width="120" Name="txtTPS"/>
         <CheckBox Content="Sentiment" HorizontalAlignment="Left" Margin="842,204,0,0" VerticalAlignment="Top" Name="chSentiment" IsChecked="{Binding SentimentEnabled}"/>
-        <Button Content="Reindex" HorizontalAlignment="Left" Margin="271,270,0,0" VerticalAlignment="Top" Width="75"/>
+        <Button Content="Reindex" HorizontalAlignment="Left" Margin="271,270,0,0" VerticalAlignment="Top" Width="75" Click="btnReindex_Click"/>
         <Label Content="Azure Search:" HorizontalAlignment="Left" Margin="41,201,0,0" VerticalAlignment="Top"/>
         <TextBox HorizontalAlignment="Left" Height="23" Margin="144,204,0,0" TextWrapping="Wrap" Text="https://maxmelcher.search.windows.net" VerticalAlignment="Top" Width="461" x:Name="txtAzureSearch"/>
-        <Button Content="Create Schema" HorizontalAlignment="Left" Margin="144,270,0,0" VerticalAlignment="Top" Width="107"/>
+        <Button Content="Create Schema" HorizontalAlignment="Left" Margin="144,270,0,0" VerticalAlignment="Top" Width="107" Click="btnCreateSchema_Click"/>
         <TextBox HorizontalAlignment="Left" Height="23" Margin="842,85,0,0" TextWrapping="Wrap" Text="{Binding SignalRCount, Mode=TwoWay}" VerticalAlignment="Top" Width="120" x:Name="txtSignalR"/>
         <TextBox HorizontalAlignment="Left" Height="23" Margin="842,165,0,0" TextWrapping="Wrap" Text="{Binding SharePointCount, Mode=TwoWay}" VerticalAlignment="Top" Width="120" x:Name="txtSP"/>
+        <Button Content="Delete Index" HorizontalAlignment="Left" Margin="365,270,0,0" VerticalAlignment="Top" Width="75" RenderTransformOrigin="2.32,1.35" Click="btnDeleteIndex_Click"/>
+        <Button Content="Empty" HorizontalAlignment="Left" Margin="568,165,0,0" VerticalAlignment="Top" Width="37"/>
+        <TextBox x:Name="txtSearchText" HorizontalAlignment="Left" Height="23" Margin="29,336,0,0" TextWrapping="Wrap" Text="{Binding SearchText}" VerticalAlignment="Top" Width="133"/>
+        <Button Content="Search" HorizontalAlignment="Left" Margin="176,336,0,0" VerticalAlignment="Top" Width="75" Click="btnSearch_Click"/>
     </Grid>
 </Window>
