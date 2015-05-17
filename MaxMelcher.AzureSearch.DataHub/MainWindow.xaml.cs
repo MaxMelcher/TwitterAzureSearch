@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Configuration;
 using System.Diagnostics;
@@ -38,6 +39,20 @@ namespace MaxMelcher.AzureSearch.DataHub
         private bool _stopSharePoint = true;
         private bool _sentimentEnabled;
         private SearchServiceClient _searchServiceClient;
+        private ObservableCollection<Tweet> _searchResults = new ObservableCollection<Tweet>();
+        private double _searchTime;
+
+        public double SearchTime
+        {
+            get { return _searchTime; }
+            set { _searchTime = value; NotifyPropertyChanged("SearchTime"); }
+        }
+
+        public ObservableCollection<Tweet> SearchResults
+        {
+            get { return _searchResults; }
+            set { _searchResults = value; }
+        }
 
         public string SearchText { get; set; }
 
@@ -93,6 +108,7 @@ namespace MaxMelcher.AzureSearch.DataHub
             CultureInfo.DefaultThreadCurrentCulture = new CultureInfo("en-US");
             CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo("en-US");
 
+            
             Grid.DataContext = this;
         }
 
@@ -347,7 +363,7 @@ namespace MaxMelcher.AzureSearch.DataHub
 
         }
 
-        private async void SearchDocuments()
+        private  void SearchDocuments()
         {
             try
             {
@@ -356,10 +372,11 @@ namespace MaxMelcher.AzureSearch.DataHub
             var sp = new SearchParameters();
 
             SearchIndexClient indexClient = SearchServiceClient.Indexes.GetClient("twittersearch");
-            DocumentSearchResponse<Tweet> response = await indexClient.Documents.SearchAsync<Tweet>(SearchText, sp);
+            DocumentSearchResponse<Tweet> response = indexClient.Documents.Search<Tweet>(SearchText, sp);
             foreach (SearchResult<Tweet> result in response)
             {
                 Console.WriteLine(result.Document);
+                SearchResults.Add(result.Document);
             }
 
             }
@@ -369,9 +386,17 @@ namespace MaxMelcher.AzureSearch.DataHub
             }
         }
 
-        private void btnSearch_Click(object sender, RoutedEventArgs e)
+        private async void  btnSearch_Click(object sender, RoutedEventArgs e)
         {
+            SearchResults.Clear();
+            Stopwatch watch = new Stopwatch();
+            watch.Start();
             SearchDocuments();
+            watch.Stop();
+
+            SearchTime = watch.ElapsedMilliseconds;
         }
+
+       
     }
 }
