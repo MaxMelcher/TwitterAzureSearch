@@ -8,6 +8,7 @@ using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using LinqToTwitter;
@@ -41,6 +42,7 @@ namespace MaxMelcher.AzureSearch.DataHub
         private SearchServiceClient _searchServiceClient;
         private ObservableCollection<Tweet> _searchResults = new ObservableCollection<Tweet>();
         private double _searchTime;
+        private LimitList<Tweet> _tweets = new LimitList<Tweet>(5);
 
         public double SearchTime
         {
@@ -52,6 +54,11 @@ namespace MaxMelcher.AzureSearch.DataHub
         {
             get { return _searchResults; }
             set { _searchResults = value; }
+        }
+
+        public LimitList<Tweet> Tweets
+        {
+            get { return _tweets; }
         }
 
         public string SearchText { get; set; }
@@ -108,7 +115,7 @@ namespace MaxMelcher.AzureSearch.DataHub
             CultureInfo.DefaultThreadCurrentCulture = new CultureInfo("en-US");
             CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo("en-US");
 
-            
+
             Grid.DataContext = this;
         }
 
@@ -163,42 +170,40 @@ namespace MaxMelcher.AzureSearch.DataHub
 
             //subscribe to stream
             TwitterCount = 0;
-            await twitterCtx.Streaming.Where(strm => strm.Type == StreamingType.Filter && strm.Track == TwitterHashtag).StartAsync(async strm =>
+            await twitterCtx.Streaming.Where(strm => strm != null && strm.Type == StreamingType.Filter && strm.Track == TwitterHashtag).StartAsync(async strm =>
                  {
-                     Debugger.Log(1, "Twitter", strm.Content);
-                     TwitterCount++;
-
-                     if (_stopTwitter) { strm.CloseStream(); }
-
-                     if (strm.EntityType == StreamEntityType.Status)
-                     {
-                         UploadSharePoint((Status)strm.Entity);
-                     }
+                     await NewTweet(strm);
                  });
         }
 
-        private async void UploadSharePoint(Status content)
+        private async Task NewTweet(StreamContent strm)
         {
-            if (_stopSharePoint) return;
+            TwitterCount++;
 
-            string siteUrl = "https://intranet.demo.com/sites/azuresearch";
+            if (_stopTwitter)
+            {
+                strm.CloseStream();
+            }
 
-            ClientContext clientContext = new ClientContext(siteUrl);
-            List oList = clientContext.Web.Lists.GetByTitle("Tweets");
+            if (strm.EntityType == StreamEntityType.Limit)
+            {
+                MessageBox.Show("Rate Limit");
+                Thread.Sleep(5000);
+                return;
+            }
+            Status status = (Status) strm.Entity;
+            Tweet tweet = new Tweet();
+            tweet.Text = status.Text;
+            tweet.Url = string.Format("https://twitter.com/{0}/status/{1}", status.User.ScreenNameResponse, status.StatusID);
+            tweet.Mention = string.Join("; ", status.Entities.UserMentionEntities.Select(x => string.Concat("@", x.ScreenName)));
+            tweet.StatusId = status.StatusID.ToString();
 
-            ListItemCreationInformation itemCreateInfo = new ListItemCreationInformation();
-            ListItem oListItem = oList.AddItem(itemCreateInfo);
-            oListItem["Title"] = content.Text;
-            oListItem["Url"] = string.Format("https://twitter.com/{0}/status/{1}", content.User.ScreenNameResponse, content.StatusID);
-            oListItem["Mention"] = string.Join("; ", content.Entities.UserMentionEntities.Select(x => string.Concat("@", x.ScreenName)));
-            oListItem["StatusId"] = content.StatusID;
-            var score = await GetSentiment(content);
+            var score = await GetSentiment(status);
 
-            oListItem["Score"] = score;
-
+            tweet.Score = score;
 
             string sentiment = "";
-            if ((int)score == -1)
+            if ((int) score == -1)
             {
                 //do nothing
             }
@@ -222,7 +227,35 @@ namespace MaxMelcher.AzureSearch.DataHub
             {
                 sentiment = "awesome";
             }
-            oListItem["Sentiment"] = sentiment;
+            tweet.Sentiment = sentiment;
+
+            if (strm.EntityType == StreamEntityType.Status)
+            {
+                UploadSharePoint(tweet);
+            }
+
+            Dispatcher.InvokeAsync(() => { Tweets.Add(tweet); });
+        }
+
+        private async void UploadSharePoint(Tweet tweet)
+        {
+            if (_stopSharePoint) return;
+
+            string siteUrl = "https://intranet.demo.com/sites/azuresearch";
+
+            ClientContext clientContext = new ClientContext(siteUrl);
+            List oList = clientContext.Web.Lists.GetByTitle("Tweets");
+
+            ListItemCreationInformation itemCreateInfo = new ListItemCreationInformation();
+            ListItem oListItem = oList.AddItem(itemCreateInfo);
+            oListItem["Title"] = tweet.Text;
+            oListItem["Url"] = tweet.Url;
+            oListItem["Mention"] = tweet.Mention;
+            oListItem["StatusId"] = tweet.StatusId;
+
+            oListItem["Score"] = tweet.Score;
+
+            oListItem["Sentiment"] = tweet.Sentiment;
 
             oListItem.Update();
             clientContext.ExecuteQuery();
@@ -363,21 +396,21 @@ namespace MaxMelcher.AzureSearch.DataHub
 
         }
 
-        private  void SearchDocuments()
+        private void SearchDocuments()
         {
             try
             {
 
-            // Execute search based on search text and optional filter
-            var sp = new SearchParameters();
+                // Execute search based on search text and optional filter
+                var sp = new SearchParameters();
 
-            SearchIndexClient indexClient = SearchServiceClient.Indexes.GetClient("twittersearch");
-            DocumentSearchResponse<Tweet> response = indexClient.Documents.Search<Tweet>(SearchText, sp);
-            foreach (SearchResult<Tweet> result in response)
-            {
-                Console.WriteLine(result.Document);
-                SearchResults.Add(result.Document);
-            }
+                SearchIndexClient indexClient = SearchServiceClient.Indexes.GetClient("twittersearch");
+                DocumentSearchResponse<Tweet> response = indexClient.Documents.Search<Tweet>(SearchText, sp);
+                foreach (SearchResult<Tweet> result in response)
+                {
+                    Console.WriteLine(result.Document);
+                    SearchResults.Add(result.Document);
+                }
 
             }
             catch (Exception ex)
@@ -386,7 +419,7 @@ namespace MaxMelcher.AzureSearch.DataHub
             }
         }
 
-        private async void  btnSearch_Click(object sender, RoutedEventArgs e)
+        private async void btnSearch_Click(object sender, RoutedEventArgs e)
         {
             SearchResults.Clear();
             Stopwatch watch = new Stopwatch();
@@ -397,6 +430,6 @@ namespace MaxMelcher.AzureSearch.DataHub
             SearchTime = watch.ElapsedMilliseconds;
         }
 
-       
+
     }
 }
