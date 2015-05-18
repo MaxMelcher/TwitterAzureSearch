@@ -16,7 +16,7 @@
         <Button Name="btnStopTwitter" IsEnabled="False" Content="Stop" HorizontalAlignment="Left" Margin="723,122,0,0" VerticalAlignment="Top" Width="75" Click="btnStopTwitter_Click"/>
         <Button Name="btnStopSharePoint" IsEnabled="False" Content="Stop" HorizontalAlignment="Left" Margin="723,165,0,0" VerticalAlignment="Top" Width="75" Click="btnStopSharePoint_Click"/>
         <TextBox HorizontalAlignment="Left" Height="23" Margin="842,122,0,0" TextWrapping="Wrap" Text="{Binding TwitterCount, Mode=TwoWay}" VerticalAlignment="Top" Width="120" Name="txtTPS"/>
-        <CheckBox Content="Sentiment" HorizontalAlignment="Left" Margin="842,204,0,0" VerticalAlignment="Top" Name="chSentiment" IsChecked="{Binding SentimentEnabled}"/>
+        <CheckBox Content="Sentiment" HorizontalAlignment="Left" Margin="842,244,0,0" VerticalAlignment="Top" Name="chSentiment" IsChecked="{Binding SentimentEnabled}"/>
         <Button Content="Reindex" HorizontalAlignment="Left" Margin="271,270,0,0" VerticalAlignment="Top" Width="75" Click="btnReindex_Click"/>
         <Label Content="Azure Search:" HorizontalAlignment="Left" Margin="41,201,0,0" VerticalAlignment="Top"/>
         <TextBox HorizontalAlignment="Left" Height="23" Margin="144,204,0,0" TextWrapping="Wrap" Text="https://maxmelcher.search.windows.net" VerticalAlignment="Top" Width="461" x:Name="txtAzureSearch"/>
@@ -36,5 +36,8 @@
                 <DataGridTextColumn Header="Text" Binding="{Binding Text}" />
             </DataGrid.Columns>
         </DataGrid>
+        <Button Name="btnStartAzureSearch" Content="Start" HorizontalAlignment="Left" Margin="629,205,0,0" VerticalAlignment="Top" Width="75" Click="btnStartAzureSearch_Click"/>
+        <Button Name="btnStopSAzureSearch" IsEnabled="False" Content="Stop" HorizontalAlignment="Left" Margin="723,205,0,0" VerticalAlignment="Top" Width="75" Click="btnStopAzureSearch_Click"/>
+        <TextBox HorizontalAlignment="Left" Height="23" Margin="842,204,0,0" TextWrapping="Wrap" Text="{Binding AzureSearchCount, Mode=TwoWay}" VerticalAlignment="Top" Width="120" x:Name="txtSP_Copy"/>
     </Grid>
 </Window>

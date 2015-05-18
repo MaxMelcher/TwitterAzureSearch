@@ -42,7 +42,9 @@ namespace MaxMelcher.AzureSearch.DataHub
         private SearchServiceClient _searchServiceClient;
         private ObservableCollection<Tweet> _searchResults = new ObservableCollection<Tweet>();
         private double _searchTime;
-        private LimitList<Tweet> _tweets = new LimitList<Tweet>(5);
+        private FixedSizeObservableCollection<Tweet> _tweets = new FixedSizeObservableCollection<Tweet>(3);
+        private bool _azureSearchEnabled;
+        private int _azureSearchCount;
 
         public double SearchTime
         {
@@ -56,7 +58,7 @@ namespace MaxMelcher.AzureSearch.DataHub
             set { _searchResults = value; }
         }
 
-        public LimitList<Tweet> Tweets
+        public FixedSizeObservableCollection<Tweet> Tweets
         {
             get { return _tweets; }
         }
@@ -85,6 +87,12 @@ namespace MaxMelcher.AzureSearch.DataHub
             set { _searchServiceClient = value; }
         }
 
+        public int AzureSearchCount
+        {
+            get { return _azureSearchCount; }
+            set { _azureSearchCount = value; NotifyPropertyChanged("AzureSearchCount"); }
+        }
+
         public int TwitterCount
         {
             get { return _twitterCount; }
@@ -107,6 +115,12 @@ namespace MaxMelcher.AzureSearch.DataHub
         {
             get { return _sentimentEnabled; }
             set { _sentimentEnabled = value; NotifyPropertyChanged("SentimentEnabled"); }
+        }
+
+        public bool AzureSearchEnabled
+        {
+            get { return _azureSearchEnabled; }
+            set { _azureSearchEnabled = value; NotifyPropertyChanged("AzureSearchEnabled"); }
         }
 
         public MainWindow()
@@ -178,20 +192,35 @@ namespace MaxMelcher.AzureSearch.DataHub
 
         private async Task NewTweet(StreamContent strm)
         {
-            TwitterCount++;
-
             if (_stopTwitter)
             {
                 strm.CloseStream();
+                return;
             }
-
+            
+            TwitterCount++;
+            
             if (strm.EntityType == StreamEntityType.Limit)
             {
                 MessageBox.Show("Rate Limit");
                 Thread.Sleep(5000);
                 return;
             }
+
+            if (strm.EntityType != StreamEntityType.Status) return;
+
             Status status = (Status) strm.Entity;
+            var tweet = await GetTweet(status);
+
+            UploadSharePoint(tweet);
+            PushTweetToAzure(tweet);
+            
+            Dispatcher.InvokeAsync(() => { Tweets.Add(tweet); });
+            Thread.Sleep(1000);
+        }
+
+        private async Task<Tweet> GetTweet(Status status)
+        {
             Tweet tweet = new Tweet();
             tweet.Text = status.Text;
             tweet.Url = string.Format("https://twitter.com/{0}/status/{1}", status.User.ScreenNameResponse, status.StatusID);
@@ -228,13 +257,7 @@ namespace MaxMelcher.AzureSearch.DataHub
                 sentiment = "awesome";
             }
             tweet.Sentiment = sentiment;
-
-            if (strm.EntityType == StreamEntityType.Status)
-            {
-                UploadSharePoint(tweet);
-            }
-
-            Dispatcher.InvokeAsync(() => { Tweets.Add(tweet); });
+            return tweet;
         }
 
         private async void UploadSharePoint(Tweet tweet)
@@ -431,5 +454,33 @@ namespace MaxMelcher.AzureSearch.DataHub
         }
 
 
+        private void btnStopAzureSearch_Click(object sender, RoutedEventArgs e)
+        {
+            AzureSearchEnabled = false;
+            btnStartAzureSearch.IsEnabled = true;
+            btnStopSAzureSearch.IsEnabled = false;
+        }
+
+        private void btnStartAzureSearch_Click(object sender, RoutedEventArgs e)
+        {
+            AzureSearchEnabled = true;
+            btnStartAzureSearch.IsEnabled = false;
+            btnStopSAzureSearch.IsEnabled = true;
+        }
+
+        public void PushTweetToAzure(Tweet tweet)
+        {
+            if (!AzureSearchEnabled) return;
+            SearchIndexClient indexClient = SearchServiceClient.Indexes.GetClient("twittersearch");
+
+            try
+            {
+                indexClient.Documents.Index(IndexBatch.Create(IndexAction.Create(tweet)));
+                AzureSearchCount++;
+            }
+            catch (IndexBatchException ex)
+            {
+            }
+        }
     }
 }
