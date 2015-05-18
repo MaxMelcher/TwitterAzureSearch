@@ -12,6 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using LinqToTwitter;
+using MahApps.Metro.Controls;
 using Microsoft.AspNet.SignalR.Client;
 using Microsoft.Azure.Search;
 using Microsoft.Azure.Search.Models;
