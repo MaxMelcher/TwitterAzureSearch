@@ -192,14 +192,17 @@ namespace MaxMelcher.AzureSearch.DataHub
 
         private async Task NewTweet(StreamContent strm)
         {
+            //check if we should stop
             if (_stopTwitter)
             {
                 strm.CloseStream();
                 return;
             }
             
+            //increase the count
             TwitterCount++;
             
+            //check if we are rate limited - DEMO GODS, PLEASE!!!
             if (strm.EntityType == StreamEntityType.Limit)
             {
                 MessageBox.Show("Rate Limit");
@@ -207,15 +210,24 @@ namespace MaxMelcher.AzureSearch.DataHub
                 return;
             }
 
+            //we are only interested in Status 
             if (strm.EntityType != StreamEntityType.Status) return;
 
             Status status = (Status) strm.Entity;
+            
+            //get the tweet
             var tweet = await GetTweet(status);
 
+            //upload to SharePoint
             UploadSharePoint(tweet);
+
+            //push it to Azure
             PushTweetToAzure(tweet);
             
+            //Add it to the recent 3 tweets grid
             Dispatcher.InvokeAsync(() => { Tweets.Add(tweet); });
+
+            //sleep
             Thread.Sleep(1000);
         }
 
