@@ -436,8 +436,6 @@ namespace MaxMelcher.AzureSearch.DataHub
         {
             try
             {
-
-                // Execute search based on search text and optional filter
                 var sp = new SearchParameters();
 
                 SearchIndexClient indexClient = SearchServiceClient.Indexes.GetClient("twittersearch");
@@ -447,7 +445,6 @@ namespace MaxMelcher.AzureSearch.DataHub
                     Console.WriteLine(result.Document);
                     SearchResults.Add(result.Document);
                 }
-
             }
             catch (Exception ex)
             {
@@ -465,6 +462,7 @@ namespace MaxMelcher.AzureSearch.DataHub
 
             SearchTime = watch.ElapsedMilliseconds;
         }
+
 
 
         private void btnStopAzureSearch_Click(object sender, RoutedEventArgs e)
