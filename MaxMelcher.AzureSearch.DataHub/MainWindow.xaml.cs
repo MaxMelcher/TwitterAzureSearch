@@ -370,7 +370,7 @@ namespace MaxMelcher.AzureSearch.DataHub
                         new ASField("Url", DataType.String) {IsKey = false, IsSearchable = true, IsFilterable = false, IsSortable = false, IsFacetable = true, IsRetrievable = true},
                         new ASField("StatusId", DataType.String) {IsKey = true, IsSearchable = true, IsFilterable = false, IsSortable = true, IsFacetable = true, IsRetrievable = true},
                         new ASField("Sentiment", DataType.String) {IsKey = false, IsSearchable = true, IsFilterable = false, IsSortable = true, IsFacetable = true, IsRetrievable = true},
-                        new ASField("Score", DataType.Double),
+                        new ASField("Score", DataType.Double) {IsFilterable = true },
                     }
                 };
 
